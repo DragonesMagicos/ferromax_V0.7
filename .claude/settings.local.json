@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p C:/data/ferromax-erp/src/main/java/com/ferromax/erp)",
+      "Bash(mkdir -p C:/data/ferromax-erp/src/main/resources)",
+      "Bash(mkdir -p C:/data/ferromax-erp/src/test/java/com/ferromax/erp)",
+      "Bash(npm create *)",
+      "Bash(npm install *)",
+      "Bash(rm C:/data/ferromax-erp/ferromax-web/src/App.css)",
+      "Bash(npm run *)",
+      "Bash(curl -sv http://localhost:3000/api/auth/login -X POST -H \"Content-Type: application/json\" -d '{}')",
+      "Bash(kill 1468)"
+    ]
+  }
+}
