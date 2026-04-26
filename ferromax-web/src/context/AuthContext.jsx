@@ -1,33 +1,59 @@
-import { createContext, useContext, useState, useCallback } from 'react'
-import axiosClient from '../api/axiosClient'
+import { createContext, useCallback, useContext, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import authService from '../services/authService'
 
 const AuthContext = createContext(null)
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    const raw = localStorage.getItem('ferromax_user')
-    return raw ? JSON.parse(raw) : null
-  })
+  const [usuario, setUsuario] = useState(null)
+  const [token, setToken] = useState(null)
+  const [cargando, setCargando] = useState(true)
+  const navigate = useNavigate()
 
-  const login = useCallback(async (username, password) => {
-    const { data } = await axiosClient.post('/auth/login', { username, password })
-    localStorage.setItem('ferromax_token', data.token)
-    localStorage.setItem('ferromax_user', JSON.stringify(data.user))
-    setUser(data.user)
-    return data.user
+  useEffect(() => {
+    const tokenGuardado = authService.getToken()
+    const usuarioGuardado = authService.getUsuarioGuardado()
+    if (tokenGuardado && usuarioGuardado) {
+      setToken(tokenGuardado)
+      setUsuario(usuarioGuardado)
+    }
+    setCargando(false)
+  }, [])
+
+  const login = useCallback(async (email, password) => {
+    try {
+      const data = await authService.login(email, password)
+      setToken(data.token)
+      setUsuario({ nombre: data.nombre, rol: data.rol })
+      return true
+    } catch {
+      return false
+    }
   }, [])
 
   const logout = useCallback(() => {
-    localStorage.removeItem('ferromax_token')
-    localStorage.removeItem('ferromax_user')
-    setUser(null)
-  }, [])
+    authService.logout()
+    setUsuario(null)
+    setToken(null)
+    navigate('/login')
+  }, [navigate])
+
+  const isAdmin = useCallback(() => usuario?.rol === 'ADMIN', [usuario])
+
+  const isEmpleado = useCallback(
+    () => usuario?.rol === 'EMPLEADO' || usuario?.rol === 'ADMIN',
+    [usuario]
+  )
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ usuario, token, cargando, login, logout, isAdmin, isEmpleado }}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export const useAuth = () => useContext(AuthContext)
+export function useAuth() {
+  const ctx = useContext(AuthContext)
+  if (!ctx) throw new Error('useAuth debe usarse dentro de AuthProvider')
+  return ctx
+}

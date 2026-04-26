@@ -21,7 +21,13 @@
       "Bash(curl -s -X POST http://localhost:8081/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"jose@ferromax.com\",\"password\":\"admin123\"}')",
       "Bash(python -m json.tool)",
       "Bash(curl -s http://localhost:8081/api/productos/1 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb3NlQGZlcnJvbWF4LmNvbSIsInJvbCI6IkFETUlOIiwidXN1YXJpb0lkIjozLCJpYXQiOjE3NzcyMjMxMjEsImV4cCI6MTc3NzI1MTkyMX0.miP38ZJNoTdPFFuAyX9tmJuBwzxMoGoJZ4RSlIkG1xg')",
-      "Bash(curl -s http://localhost:8081/api/productos/4 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb3NlQGZlcnJvbWF4LmNvbSIsInJvbCI6IkFETUlOIiwidXN1YXJpb0lkIjozLCJpYXQiOjE3NzcyMjMxMjEsImV4cCI6MTc3NzI1MTkyMX0.miP38ZJNoTdPFFuAyX9tmJuBwzxMoGoJZ4RSlIkG1xg')"
+      "Bash(curl -s http://localhost:8081/api/productos/4 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb3NlQGZlcnJvbWF4LmNvbSIsInJvbCI6IkFETUlOIiwidXN1YXJpb0lkIjozLCJpYXQiOjE3NzcyMjMxMjEsImV4cCI6MTc3NzI1MTkyMX0.miP38ZJNoTdPFFuAyX9tmJuBwzxMoGoJZ4RSlIkG1xg')",
+      "Bash(python -c ' *)",
+      "Bash(psql *)",
+      "PowerShell(& \"C:\\\\Program Files\\\\PostgreSQL\\\\16\\\\bin\\\\psql.exe\" -U postgres -d ferromax -c \"ALTER TABLE movimientos_stock ALTER COLUMN usuario_id DROP NOT NULL;\")",
+      "PowerShell($env:PGPASSWORD = \"doky2010\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -d ferromax -c \"ALTER TABLE movimientos_stock ALTER COLUMN usuario_id DROP NOT NULL;\")",
+      "PowerShell($env:PGPASSWORD = \"doky2010\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -l 2>&1 | Select-String \"ferromax|Name\")",
+      "PowerShell($env:PGPASSWORD = \"doky2010\"; & \"C:\\\\Program Files\\\\PostgreSQL\\\\18\\\\bin\\\\psql.exe\" -U postgres -d ferromax_db -c \"ALTER TABLE movimientos_stock ALTER COLUMN usuario_id DROP NOT NULL;\")"
     ]
   }
 }
