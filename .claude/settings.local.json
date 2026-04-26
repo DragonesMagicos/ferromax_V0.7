@@ -14,7 +14,14 @@
       "Bash(psql -U postgres -c \"\\\\du\")",
       "Bash(pg_isready)",
       "Bash(mvn compile *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(mvn spring-boot:run)",
+      "Bash(echo \"PID: $!\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s -X POST http://localhost:8081/api/auth/login -H 'Content-Type: application/json' -d '{\"email\":\"jose@ferromax.com\",\"password\":\"admin123\"}')",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s http://localhost:8081/api/productos/1 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb3NlQGZlcnJvbWF4LmNvbSIsInJvbCI6IkFETUlOIiwidXN1YXJpb0lkIjozLCJpYXQiOjE3NzcyMjMxMjEsImV4cCI6MTc3NzI1MTkyMX0.miP38ZJNoTdPFFuAyX9tmJuBwzxMoGoJZ4RSlIkG1xg')",
+      "Bash(curl -s http://localhost:8081/api/productos/4 -H 'Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb3NlQGZlcnJvbWF4LmNvbSIsInJvbCI6IkFETUlOIiwidXN1YXJpb0lkIjozLCJpYXQiOjE3NzcyMjMxMjEsImV4cCI6MTc3NzI1MTkyMX0.miP38ZJNoTdPFFuAyX9tmJuBwzxMoGoJZ4RSlIkG1xg')"
     ]
   }
 }

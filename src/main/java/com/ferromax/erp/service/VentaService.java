@@ -8,11 +8,14 @@ import com.ferromax.erp.model.Comprobante;
 import com.ferromax.erp.model.EstadoVentaEnum;
 import com.ferromax.erp.model.ItemVenta;
 import com.ferromax.erp.model.MedioPagoEnum;
+import com.ferromax.erp.model.MovimientoStock;
 import com.ferromax.erp.model.Producto;
 import com.ferromax.erp.model.TipoComprobanteEnum;
+import com.ferromax.erp.model.TipoMovimientoEnum;
 import com.ferromax.erp.model.Venta;
 import com.ferromax.erp.repository.ClienteRepository;
 import com.ferromax.erp.repository.ComprobanteRepository;
+import com.ferromax.erp.repository.MovimientoStockRepository;
 import com.ferromax.erp.repository.ProductoRepository;
 import com.ferromax.erp.repository.UsuarioRepository;
 import com.ferromax.erp.repository.VentaRepository;
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,6 +37,7 @@ public class VentaService {
     private final UsuarioRepository usuarioRepository;
     private final ClienteRepository clienteRepository;
     private final ComprobanteRepository comprobanteRepository;
+    private final MovimientoStockRepository movimientoStockRepository;
     private final ProductoService productoService;
 
     @Transactional
@@ -105,6 +110,52 @@ public class VentaService {
         comprobanteRepository.save(comprobante);
 
         return toResponse(ventaGuardada);
+    }
+
+    @Transactional(readOnly = true)
+    public List<VentaResponse> listarPorRango(OffsetDateTime desde, OffsetDateTime hasta) {
+        return ventaRepository.findByFechaBetween(desde, hasta)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public VentaResponse buscarPorId(Long id) {
+        return toResponse(ventaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Venta", id)));
+    }
+
+    @Transactional
+    public VentaResponse anular(Long id) {
+        Venta venta = ventaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Venta", id));
+
+        if (venta.getEstado() == EstadoVentaEnum.ANULADA) {
+            throw new IllegalArgumentException("La venta " + id + " ya está anulada");
+        }
+
+        // Devolver stock de cada ítem y registrar movimiento de devolución
+        for (ItemVenta item : venta.getItems()) {
+            Producto producto = item.getProducto();
+            int stockAnterior = producto.getStockActual();
+            int stockNuevo = stockAnterior + item.getCantidad();
+
+            producto.setStockActual(stockNuevo);
+            productoRepository.save(producto);
+
+            MovimientoStock mov = new MovimientoStock();
+            mov.setProducto(producto);
+            mov.setTipo(TipoMovimientoEnum.DEVOLUCION);
+            mov.setCantidad(item.getCantidad());
+            mov.setStockAnterior(stockAnterior);
+            mov.setStockNuevo(stockNuevo);
+            mov.setNotas("Devolución por anulación de venta #" + id);
+            movimientoStockRepository.save(mov);
+        }
+
+        venta.setEstado(EstadoVentaEnum.ANULADA);
+        return toResponse(ventaRepository.save(venta));
     }
 
     private VentaResponse toResponse(Venta venta) {

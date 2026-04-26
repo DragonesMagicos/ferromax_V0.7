@@ -2,6 +2,8 @@ package com.ferromax.erp.service;
 
 import com.ferromax.erp.dto.ProductoCreateRequest;
 import com.ferromax.erp.dto.ProductoDTO;
+import com.ferromax.erp.dto.ProductoPublicoDTO;
+import com.ferromax.erp.dto.ProductoUpdateRequest;
 import com.ferromax.erp.exception.RecursoNoEncontradoException;
 import com.ferromax.erp.model.AlertaStock;
 import com.ferromax.erp.model.MovimientoStock;
@@ -28,6 +30,7 @@ public class ProductoService {
     private final MovimientoStockRepository movimientoStockRepository;
     private final AlertaStockRepository alertaStockRepository;
 
+    @Transactional(readOnly = true)
     public List<ProductoDTO> listarTodos() {
         return productoRepository.findAllByActivoTrue()
                 .stream()
@@ -35,12 +38,14 @@ public class ProductoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public ProductoDTO buscarPorSku(String sku) {
         Producto producto = productoRepository.findBySku(sku)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto", "sku", sku));
         return toDTO(producto);
     }
 
+    @Transactional(readOnly = true)
     public ProductoDTO buscarPorId(Long id) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto", id));
@@ -90,11 +95,47 @@ public class ProductoService {
         return toDTO(producto);
     }
 
+    @Transactional(readOnly = true)
     public List<ProductoDTO> obtenerStockCritico() {
         return productoRepository.findProductosConStockCritico()
                 .stream()
                 .map(this::toDTO)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProductoPublicoDTO> listarPublico() {
+        return productoRepository.findAllByActivoTrue().stream()
+                .filter(p -> p.getStockActual() > 0)
+                .map(p -> new ProductoPublicoDTO(
+                        p.getId(),
+                        p.getNombre(),
+                        p.getPrecio(),
+                        p.getStockActual(),
+                        p.getImagenUrl(),
+                        p.getCategoria() != null ? p.getCategoria().getNombre() : null))
+                .toList();
+    }
+
+    @Transactional
+    public ProductoDTO actualizar(Long id, ProductoUpdateRequest request) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto", id));
+
+        if (request.nombre() != null)      producto.setNombre(request.nombre());
+        if (request.precio() != null)      producto.setPrecio(request.precio());
+        if (request.stockMinimo() != null) producto.setStockMinimo(request.stockMinimo());
+        if (request.imagenUrl() != null)   producto.setImagenUrl(request.imagenUrl());
+
+        return toDTO(productoRepository.save(producto));
+    }
+
+    @Transactional
+    public void desactivar(Long id) {
+        Producto producto = productoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto", id));
+        producto.setActivo(false);
+        productoRepository.save(producto);
     }
 
     // ── Helpers privados ──────────────────────────────────────────────────────
