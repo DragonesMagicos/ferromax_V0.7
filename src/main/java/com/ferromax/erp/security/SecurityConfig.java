@@ -38,23 +38,50 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) -> res.sendError(401, "No autenticado"))
+            )
             .authorizeHttpRequests(auth -> auth
 
                 // Rutas públicas
                 .requestMatchers(HttpMethod.POST, "/auth/login", "/auth/register").permitAll()
                 .requestMatchers(HttpMethod.GET,  "/productos/publico").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/categorias/**").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/img/**").permitAll()
 
                 // Solo ADMIN
                 .requestMatchers(HttpMethod.GET,  "/dashboard/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET,  "/ventas").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET,  "/ventas/mis-compras").hasRole("CLIENTE")
+                .requestMatchers(HttpMethod.GET,  "/ventas/mis-ventas-hoy").hasRole("EMPLEADO")
                 .requestMatchers(HttpMethod.PUT,  "/ventas/{id}/anular").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET,  "/alertas/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET,  "/proveedores/**").hasRole("ADMIN")
 
-                // ADMIN o EMPLEADO
-                .requestMatchers(HttpMethod.POST, "/ventas").hasAnyRole("ADMIN", "EMPLEADO")
-                .requestMatchers(HttpMethod.GET,  "/productos").hasAnyRole("ADMIN", "EMPLEADO")
-                .requestMatchers(HttpMethod.GET,  "/productos/sku/{sku}").hasAnyRole("ADMIN", "EMPLEADO")
+                // Proveedores — lista para EMPLEADO (solo GET), gestión completa para ADMIN
+                .requestMatchers(HttpMethod.GET,  "/proveedores").hasAnyRole("ADMIN", "EMPLEADO")
+                .requestMatchers("/proveedores/**").hasRole("ADMIN")
+
+                // ADMIN, EMPLEADO o CLIENTE (ventas online)
+                .requestMatchers(HttpMethod.POST, "/ventas").hasAnyRole("ADMIN", "EMPLEADO", "CLIENTE")
+
+                // Productos — rutas exclusivas EMPLEADO (sin datos sensibles)
+                .requestMatchers(HttpMethod.GET,  "/productos/empleado/**").hasRole("EMPLEADO")
+
+                // Productos — rutas ADMIN (incluyen precioCompra y proveedor)
+                .requestMatchers(HttpMethod.GET,  "/productos").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET,  "/productos/sku/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET,  "/productos/barcode/**").hasRole("ADMIN")
+
+                // Recepción individual — ADMIN y EMPLEADO
+                .requestMatchers(HttpMethod.POST, "/recepcion").hasAnyRole("ADMIN", "EMPLEADO")
+
+                // Recepciones de remito — creación y consulta para EMPLEADO, confirmación solo ADMIN
+                .requestMatchers(HttpMethod.POST,  "/recepciones-remito").hasAnyRole("ADMIN", "EMPLEADO")
+                .requestMatchers(HttpMethod.GET,   "/recepciones-remito/mis-recepciones").hasAnyRole("ADMIN", "EMPLEADO")
+                .requestMatchers(HttpMethod.GET,   "/recepciones-remito/{id}").hasAnyRole("ADMIN", "EMPLEADO")
+                .requestMatchers(HttpMethod.GET,   "/recepciones-remito/pendientes").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET,   "/recepciones-remito").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.PATCH, "/recepciones-remito/{id}/confirmar").hasRole("ADMIN")
 
                 // CLIENTE autenticado
                 .requestMatchers(HttpMethod.POST, "/pedidos").hasRole("CLIENTE")
@@ -73,7 +100,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:5173"));
+        config.setAllowedOrigins(List.of(
+            "http://localhost:5173", "http://127.0.0.1:5173",
+            "http://localhost:5174", "http://127.0.0.1:5174",
+            "http://localhost:5175", "http://127.0.0.1:5175"
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

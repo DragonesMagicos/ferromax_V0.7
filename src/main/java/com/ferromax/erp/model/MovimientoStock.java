@@ -61,4 +61,10 @@ public class MovimientoStock {
     @JoinColumn(name = "usuario_id",
                 foreignKey = @ForeignKey(name = "fk_mov_stock_usuario"))
     private Usuario usuario;
+
+    // Null para movimientos que no corresponden a una recepción de remito
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "recepcion_remito_id",
+                foreignKey = @ForeignKey(name = "fk_mov_stock_recepcion_remito"))
+    private RecepcionRemito recepcionRemito;
 }
