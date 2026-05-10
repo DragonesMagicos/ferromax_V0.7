@@ -7,9 +7,14 @@ import DashboardPage from './pages/DashboardPage'
 import Productos from './pages/Productos'
 import Ventas from './pages/Ventas'
 import POS from './pages/POS'
+import RecepcionPage from './pages/RecepcionPage'
+import RemitosPage from './pages/RemitosPage'
 import Tienda from './pages/Tienda'
+import TiendaLogin from './pages/TiendaLogin'
 import TiendaConfirmacion from './pages/TiendaConfirmacion'
 import MisPedidos from './pages/MisPedidos'
+import Catalogo from './pages/Catalogo'
+import CatalogoCategoria from './pages/CatalogoCategoria'
 
 export default function App() {
   return (
@@ -20,22 +25,30 @@ export default function App() {
           {/* Rutas públicas */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/tienda" element={<Tienda />} />
+          <Route path="/tienda/login" element={<TiendaLogin />} />
           <Route path="/tienda/confirmacion" element={<TiendaConfirmacion />} />
           <Route path="/tienda/mis-pedidos" element={<MisPedidos />} />
+          <Route path="/catalogo" element={<Catalogo />} />
+          <Route path="/catalogo/:categoria" element={<CatalogoCategoria />} />
 
           {/* Rutas solo ADMIN */}
+          <Route path="/remitos" element={
+            <ProtectedRoute requiereAdmin>
+              <RemitosPage />
+            </ProtectedRoute>
+          } />
           <Route path="/" element={
             <ProtectedRoute requiereAdmin>
               <DashboardPage />
             </ProtectedRoute>
           } />
           <Route path="/productos" element={
-            <ProtectedRoute requiereAdmin>
+            <ProtectedRoute requiereEmpleado>
               <Productos />
             </ProtectedRoute>
           } />
           <Route path="/ventas" element={
-            <ProtectedRoute requiereAdmin>
+            <ProtectedRoute requiereEmpleado>
               <Ventas />
             </ProtectedRoute>
           } />
@@ -46,9 +59,14 @@ export default function App() {
               <POS />
             </ProtectedRoute>
           } />
+          <Route path="/recepcion" element={
+            <ProtectedRoute requiereEmpleado>
+              <RecepcionPage />
+            </ProtectedRoute>
+          } />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
+          {/* Fallback: ADMIN → dashboard, EMPLEADO → POS */}
+          <Route path="*" element={<Navigate to="/pos" replace />} />
         </Routes>
       </AuthProvider>
     </>
