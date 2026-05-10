@@ -72,6 +72,9 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,  "/productos/sku/**").hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET,  "/productos/barcode/**").hasRole("ADMIN")
 
+                // Ajuste manual de stock — solo ADMIN
+                .requestMatchers("/ajustes-stock/**").hasRole("ADMIN")
+
                 // Recepción individual — ADMIN y EMPLEADO
                 .requestMatchers(HttpMethod.POST, "/recepcion").hasAnyRole("ADMIN", "EMPLEADO")
 
