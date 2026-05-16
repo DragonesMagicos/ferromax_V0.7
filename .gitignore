@@ -24,7 +24,7 @@ Thumbs.db
 
 # Imágenes y videos de productos (descargar por separado)
 ferromax-web/public/img/
-ferromax-web/public/*.mp4
+
 ferromax-web/public/*.jpg
 img/
 
