@@ -60,5 +60,5 @@ Frontend disponible en `http://localhost:5173`
 
 | Usuario | Contraseña | Rol |
 |---|---|---|
-| admin | admin123 | Administrador |
-| empleado1 | emp123 | Empleado |
+|  jose@ferromax.com | admin123 | Administrador |
+| manuel@ferromax.com | emp123 | Empleado |
