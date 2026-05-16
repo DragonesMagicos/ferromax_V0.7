@@ -54,6 +54,10 @@ public class Venta {
     @Column(name = "medio_pago", nullable = false, length = 20)
     private MedioPagoEnum medioPago;
 
+    @Enumerated(EnumType.STRING)
+    @Column(length = 10)
+    private OrigenVentaEnum origen = OrigenVentaEnum.POS;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cajero_id", nullable = false,
                 foreignKey = @ForeignKey(name = "fk_ventas_cajero"))

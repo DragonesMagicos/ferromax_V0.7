@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public record ProductoDTO(
         Long id,
         String sku,
+        String codigoBarras,
         String nombre,
         String descripcion,
         BigDecimal precio,

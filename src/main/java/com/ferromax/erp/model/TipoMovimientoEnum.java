@@ -5,5 +5,6 @@ public enum TipoMovimientoEnum {
     COMPRA,
     AJUSTE,
     DEVOLUCION,
+    ENTRADA,
     RECEPCION_OCR
 }

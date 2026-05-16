@@ -96,6 +96,7 @@ public class DashboardService {
     private VentaResponse toResponse(Venta venta) {
         String nombreCajero = venta.getCajero().getNombre()
                 + " " + venta.getCajero().getApellido();
+        String origen = venta.getOrigen() != null ? venta.getOrigen().name() : "POS";
         return new VentaResponse(
                 venta.getId(),
                 venta.getFecha(),
@@ -103,7 +104,8 @@ public class DashboardService {
                 venta.getEstado().name(),
                 venta.getMedioPago().name(),
                 nombreCajero.strip(),
-                venta.getItems().size()
+                venta.getItems().size(),
+                origen
         );
     }
 }

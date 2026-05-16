@@ -2,6 +2,7 @@ package com.ferromax.erp.controller;
 
 import com.ferromax.erp.dto.ProductoCreateRequest;
 import com.ferromax.erp.dto.ProductoDTO;
+import com.ferromax.erp.dto.ProductoEmpleadoDTO;
 import com.ferromax.erp.dto.ProductoPublicoDTO;
 import com.ferromax.erp.dto.ProductoUpdateRequest;
 import com.ferromax.erp.service.ProductoService;
@@ -28,22 +29,50 @@ public class ProductoController {
 
     private final ProductoService productoService;
 
+    // ── ADMIN: incluye precioCompra y nombreProveedor ────────────────────────
+
     @GetMapping
-    @PreAuthorize("hasAnyRole('ADMIN','EMPLEADO')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<ProductoDTO>> listarTodos() {
         return ResponseEntity.ok(productoService.listarTodos());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasAnyRole('ADMIN','EMPLEADO')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductoDTO> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(productoService.buscarPorId(id));
     }
 
     @GetMapping("/sku/{sku}")
-    @PreAuthorize("hasAnyRole('ADMIN','EMPLEADO')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ProductoDTO> buscarPorSku(@PathVariable String sku) {
         return ResponseEntity.ok(productoService.buscarPorSku(sku));
+    }
+
+    @GetMapping("/barcode/{codigo}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ProductoDTO> buscarPorCodigoBarras(@PathVariable String codigo) {
+        return ResponseEntity.ok(productoService.buscarPorCodigoBarras(codigo));
+    }
+
+    // ── EMPLEADO: sin precioCompra ni nombreProveedor ────────────────────────
+
+    @GetMapping("/empleado")
+    @PreAuthorize("hasRole('EMPLEADO')")
+    public ResponseEntity<List<ProductoEmpleadoDTO>> listarParaEmpleado() {
+        return ResponseEntity.ok(productoService.listarParaEmpleado());
+    }
+
+    @GetMapping("/empleado/sku/{sku}")
+    @PreAuthorize("hasRole('EMPLEADO')")
+    public ResponseEntity<ProductoEmpleadoDTO> buscarPorSkuEmpleado(@PathVariable String sku) {
+        return ResponseEntity.ok(productoService.buscarPorSkuParaEmpleado(sku));
+    }
+
+    @GetMapping("/empleado/barcode/{codigo}")
+    @PreAuthorize("hasRole('EMPLEADO')")
+    public ResponseEntity<ProductoEmpleadoDTO> buscarPorCodigoBarrasEmpleado(@PathVariable String codigo) {
+        return ResponseEntity.ok(productoService.buscarPorCodigoBarrasParaEmpleado(codigo));
     }
 
     @GetMapping("/stock-critico")

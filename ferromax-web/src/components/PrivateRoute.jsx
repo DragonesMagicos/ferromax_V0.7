@@ -17,14 +17,9 @@ export default function ProtectedRoute({ children, requiereAdmin = false, requie
   }
 
   if (requiereAdmin && !isAdmin()) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-3 text-gray-600">
-        <span className="text-5xl">🚫</span>
-        <h1 className="text-2xl font-semibold">Acceso denegado</h1>
-        <p>No tenés permiso para ver esta página.</p>
-        <a href="/" className="text-blue-600 underline">Volver al inicio</a>
-      </div>
-    )
+    // El empleado tiene su propia página de inicio
+    if (isEmpleado()) return <Navigate to="/pos" replace />
+    return <Navigate to="/login" replace />
   }
 
   if (requiereEmpleado && !isEmpleado()) {

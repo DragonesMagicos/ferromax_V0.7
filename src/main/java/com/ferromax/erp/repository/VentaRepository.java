@@ -2,6 +2,7 @@ package com.ferromax.erp.repository;
 
 import com.ferromax.erp.model.EstadoVentaEnum;
 import com.ferromax.erp.model.MedioPagoEnum;
+import com.ferromax.erp.model.OrigenVentaEnum;
 import com.ferromax.erp.model.Venta;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -17,6 +18,10 @@ import java.util.List;
 public interface VentaRepository extends JpaRepository<Venta, Long> {
 
     List<Venta> findByCajeroId(Long cajeroId);
+
+    List<Venta> findByCajeroIdAndOrigenOrderByFechaDesc(Long cajeroId, OrigenVentaEnum origen);
+
+    List<Venta> findByCajeroIdAndFechaBetween(Long cajeroId, OffsetDateTime desde, OffsetDateTime hasta);
 
     List<Venta> findByFechaBetween(OffsetDateTime desde, OffsetDateTime hasta);
 

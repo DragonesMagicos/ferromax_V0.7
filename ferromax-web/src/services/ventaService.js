@@ -23,6 +23,21 @@ const ventaService = {
     const { data } = await api.put(`/ventas/${id}/anular`)
     return data
   },
+
+  async misVentasHoy() {
+    const { data } = await api.get('/ventas/mis-ventas-hoy')
+    return data
+  },
+
+  async misCompras() {
+    const { data } = await api.get('/ventas/mis-compras')
+    return data
+  },
+
+  async detalle(id) {
+    const { data } = await api.get(`/ventas/${id}/detalle`)
+    return data
+  },
 }
 
 export default ventaService

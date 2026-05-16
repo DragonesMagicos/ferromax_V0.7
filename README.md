@@ -1,41 +1,52 @@
 # Ferromax ERP
 
-Sistema de gestión integral para ferretería argentina.
+Sistema ERP para ferretería con módulos de ventas, inventario, POS y tienda online.
+
+## Stack tecnológico
+
+- **Backend:** Java 17 + Spring Boot 3.2.5 + PostgreSQL 16
+- **Frontend:** React + Vite
+- **Seguridad:** JWT
+- **Tiempo real:** WebSocket STOMP
 
 ## Requisitos previos
 
-| Herramienta | Versión mínima |
-|---|---|
-| Java JDK | 17 |
-| Apache Maven | 3.9 |
-| Node.js | 20 |
-| PostgreSQL | 16 |
+- Java 17+
+- Maven 3.8+
+- Node.js 18+
+- PostgreSQL 16
 
-## Configuración de la base de datos
+## Configuración inicial
 
-Antes de levantar el backend, creá la base de datos en PostgreSQL:
+### 1. Base de datos
 
-```sql
-CREATE DATABASE ferromax_db;
+Crear la base de datos en PostgreSQL y configurar las credenciales en `src/main/resources/application.properties`:
+
+```properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/ferromax
+spring.datasource.username=TU_USUARIO
+spring.datasource.password=TU_PASSWORD
 ```
 
-El usuario por defecto es `postgres` con contraseña `postgres` en `localhost:5432`.
-Para usar otras credenciales, editá `src/main/resources/application.properties`.
+### 2. Imágenes de productos
 
-## Levantar el backend
+Las imágenes no están incluidas en el repositorio por su tamaño (~213 MB). Copiarlas manualmente a:
 
-Desde la raíz del proyecto:
+```
+ferromax-web/public/img/
+```
+
+Solicitar el archivo comprimido `img.zip` al equipo de desarrollo y descomprimir en esa carpeta.
+
+### 3. Backend
 
 ```bash
 mvn spring-boot:run
 ```
 
-El servidor queda disponible en `http://localhost:8080/api`.  
-La documentación interactiva de la API se accede en `http://localhost:8080/api/swagger-ui.html`.
+Servidor disponible en `http://localhost:8081/api`
 
-## Levantar el frontend
-
-En otra terminal, desde la subcarpeta `ferromax-web`:
+### 4. Frontend
 
 ```bash
 cd ferromax-web
@@ -43,25 +54,11 @@ npm install
 npm run dev
 ```
 
-La aplicación queda disponible en `http://localhost:3000`.  
-En desarrollo, las peticiones a `/api` se redirigen automáticamente al backend mediante el proxy de Vite.
+Frontend disponible en `http://localhost:5173`
 
-## Estructura del proyecto
+## Usuarios por defecto
 
-```
-ferromax-erp/
-├── src/                   # Backend Java — Spring Boot
-│   └── main/
-│       ├── java/com/ferromax/erp/
-│       └── resources/
-│           └── application.properties
-├── ferromax-web/          # Frontend React + Vite + Tailwind CSS
-│   └── src/
-│       ├── api/           # Cliente Axios con interceptor JWT
-│       ├── components/    # Componentes reutilizables
-│       ├── context/       # AuthContext (login / logout)
-│       ├── hooks/
-│       ├── pages/         # LoginPage, DashboardPage, …
-│       └── utils/
-└── pom.xml
-```
+| Usuario | Contraseña | Rol |
+|---|---|---|
+| admin | admin123 | Administrador |
+| empleado1 | emp123 | Empleado |

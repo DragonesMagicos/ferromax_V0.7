@@ -31,11 +31,11 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback((redirigirA = '/login') => {
     authService.logout()
     setUsuario(null)
     setToken(null)
-    navigate('/login')
+    navigate(redirigirA)
   }, [navigate])
 
   const isAdmin = useCallback(() => usuario?.rol === 'ADMIN', [usuario])

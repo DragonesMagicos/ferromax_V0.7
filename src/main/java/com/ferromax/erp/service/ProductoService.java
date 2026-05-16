@@ -2,6 +2,7 @@ package com.ferromax.erp.service;
 
 import com.ferromax.erp.dto.ProductoCreateRequest;
 import com.ferromax.erp.dto.ProductoDTO;
+import com.ferromax.erp.dto.ProductoEmpleadoDTO;
 import com.ferromax.erp.dto.ProductoPublicoDTO;
 import com.ferromax.erp.dto.ProductoUpdateRequest;
 import com.ferromax.erp.exception.RecursoNoEncontradoException;
@@ -46,6 +47,13 @@ public class ProductoService {
     }
 
     @Transactional(readOnly = true)
+    public ProductoDTO buscarPorCodigoBarras(String codigo) {
+        Producto producto = productoRepository.findByCodigoBarras(codigo)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto", "codigoBarras", codigo));
+        return toDTO(producto);
+    }
+
+    @Transactional(readOnly = true)
     public ProductoDTO buscarPorId(Long id) {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto", id));
@@ -60,6 +68,7 @@ public class ProductoService {
 
         Producto producto = new Producto();
         producto.setSku(request.sku());
+        producto.setCodigoBarras(request.codigoBarras());
         producto.setNombre(request.nombre());
         producto.setDescripcion(request.descripcion());
         producto.setPrecio(request.precio());
@@ -104,6 +113,26 @@ public class ProductoService {
     }
 
     @Transactional(readOnly = true)
+    public List<ProductoEmpleadoDTO> listarParaEmpleado() {
+        return productoRepository.findAllByActivoTrue()
+                .stream()
+                .map(this::toEmpleadoDTO)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public ProductoEmpleadoDTO buscarPorSkuParaEmpleado(String sku) {
+        return toEmpleadoDTO(productoRepository.findBySku(sku)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto", "sku", sku)));
+    }
+
+    @Transactional(readOnly = true)
+    public ProductoEmpleadoDTO buscarPorCodigoBarrasParaEmpleado(String codigo) {
+        return toEmpleadoDTO(productoRepository.findByCodigoBarras(codigo)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Producto", "codigoBarras", codigo)));
+    }
+
+    @Transactional(readOnly = true)
     public List<ProductoPublicoDTO> listarPublico() {
         return productoRepository.findAllByActivoTrue().stream()
                 .filter(p -> p.getStockActual() > 0)
@@ -114,6 +143,11 @@ public class ProductoService {
                         p.getStockActual(),
                         p.getImagenUrl(),
                         p.getCategoria() != null ? p.getCategoria().getNombre() : null))
+                .sorted((a, b) -> {
+                    boolean aImg = a.imagenUrl() != null && !a.imagenUrl().isBlank();
+                    boolean bImg = b.imagenUrl() != null && !b.imagenUrl().isBlank();
+                    return Boolean.compare(!aImg, !bImg);
+                })
                 .toList();
     }
 
@@ -122,10 +156,11 @@ public class ProductoService {
         Producto producto = productoRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Producto", id));
 
-        if (request.nombre() != null)      producto.setNombre(request.nombre());
-        if (request.precio() != null)      producto.setPrecio(request.precio());
-        if (request.stockMinimo() != null) producto.setStockMinimo(request.stockMinimo());
-        if (request.imagenUrl() != null)   producto.setImagenUrl(request.imagenUrl());
+        if (request.nombre() != null)        producto.setNombre(request.nombre());
+        if (request.precio() != null)        producto.setPrecio(request.precio());
+        if (request.stockMinimo() != null)   producto.setStockMinimo(request.stockMinimo());
+        if (request.imagenUrl() != null)     producto.setImagenUrl(request.imagenUrl());
+        if (request.codigoBarras() != null)  producto.setCodigoBarras(request.codigoBarras());
 
         return toDTO(productoRepository.save(producto));
     }
@@ -150,6 +185,10 @@ public class ProductoService {
         movimientoStockRepository.save(movimiento);
     }
 
+    void generarAlertaSiCorrespondePublico(Producto producto, int stockNuevo) {
+        generarAlertaSiCorresponde(producto, stockNuevo);
+    }
+
     private void generarAlertaSiCorresponde(Producto producto, int stockNuevo) {
         if (stockNuevo == 0) {
             guardarAlerta(producto, "SIN_STOCK");
@@ -165,10 +204,26 @@ public class ProductoService {
         alertaStockRepository.save(alerta);
     }
 
+    private ProductoEmpleadoDTO toEmpleadoDTO(Producto p) {
+        return new ProductoEmpleadoDTO(
+                p.getId(),
+                p.getSku(),
+                p.getCodigoBarras(),
+                p.getNombre(),
+                p.getDescripcion(),
+                p.getPrecio(),
+                p.getStockActual(),
+                p.getStockMinimo(),
+                p.getImagenUrl(),
+                p.getCategoria() != null ? p.getCategoria().getNombre() : null
+        );
+    }
+
     private ProductoDTO toDTO(Producto p) {
         return new ProductoDTO(
                 p.getId(),
                 p.getSku(),
+                p.getCodigoBarras(),
                 p.getNombre(),
                 p.getDescripcion(),
                 p.getPrecio(),

@@ -17,3 +17,20 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Claude Code
+.claude/
+.agents/
+
+# Imágenes y videos de productos (descargar por separado)
+ferromax-web/public/img/
+ferromax-web/public/*.mp4
+ferromax-web/public/*.jpg
+img/
+
+# Scripts internos
+download-images.ps1
+procesar_imagenes.py
+raiz.txt
+reclasificar.sql
+skills-lock.json

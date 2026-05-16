@@ -2,14 +2,16 @@ import api from './api'
 
 const pedidoService = {
   async crear(items) {
-    // TODO: descomentar cuando exista POST /pedidos en el backend
-    // const payload = { items: items.map(i => ({ productoId: i.producto.id, cantidad: i.cantidad })) }
-    // const { data } = await api.post('/pedidos', payload)
-    // return data
-    //
-    // Simulación hasta que el endpoint esté disponible:
-    await new Promise((r) => setTimeout(r, 600))
-    return { id: Date.now(), estado: 'PENDIENTE', items }
+    const payload = {
+      medioPago: 'EFECTIVO',
+      clienteId: null,
+      items: items.map((i) => ({
+        productoId: Number(i.producto.id),
+        cantidad: Number(i.cantidad),
+      })),
+    }
+    const { data } = await api.post('/ventas', payload)
+    return data
   },
 
   async listarMios() {

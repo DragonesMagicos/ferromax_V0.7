@@ -11,6 +11,9 @@ public record ProductoCreateRequest(
         @NotBlank @Size(max = 50)
         String sku,
 
+        @Size(max = 100)
+        String codigoBarras,
+
         @NotBlank @Size(max = 200)
         String nombre,
 

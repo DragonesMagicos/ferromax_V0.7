@@ -10,5 +10,6 @@ public record VentaResponse(
         String estado,
         String medioPago,
         String nombreCajero,
-        Integer cantidadItems
+        Integer cantidadItems,
+        String origen
 ) {}

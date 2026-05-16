@@ -15,5 +15,8 @@ public record ProductoUpdateRequest(
         Integer stockMinimo,
 
         @Size(max = 500)
-        String imagenUrl
+        String imagenUrl,
+
+        @Size(max = 100)
+        String codigoBarras
 ) {}

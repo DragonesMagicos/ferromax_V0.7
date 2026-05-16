@@ -66,6 +66,10 @@ public class Producto {
     @Column(name = "imagen_url", length = 500)
     private String imagenUrl;
 
+    @Size(max = 100)
+    @Column(name = "codigo_barras", length = 100, unique = true)
+    private String codigoBarras;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categoria_id",
                 foreignKey = @ForeignKey(name = "fk_productos_categoria"))

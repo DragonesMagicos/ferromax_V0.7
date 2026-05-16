@@ -1,7 +1,9 @@
 package com.ferromax.erp.controller;
 
+import com.ferromax.erp.dto.VentaDetalleResponse;
 import com.ferromax.erp.dto.VentaRequest;
 import com.ferromax.erp.dto.VentaResponse;
+import com.ferromax.erp.model.OrigenVentaEnum;
 import com.ferromax.erp.security.JwtTokenProvider;
 import com.ferromax.erp.service.VentaService;
 import jakarta.validation.Valid;
@@ -36,14 +38,17 @@ public class VentaController {
     private final JwtTokenProvider jwtTokenProvider;
 
     @PostMapping
-    @PreAuthorize("hasAnyRole('ADMIN','EMPLEADO')")
-    public ResponseEntity<VentaResponse> registrar(
+    @PreAuthorize("hasAnyRole('ADMIN','EMPLEADO','CLIENTE')")
+    public ResponseEntity<VentaDetalleResponse> registrar(
             @Valid @RequestBody VentaRequest request,
             @RequestHeader("Authorization") String authHeader) {
 
-        Long cajeroId = jwtTokenProvider.obtenerUsuarioIdDesdeToken(authHeader.substring(7));
+        String token = authHeader.substring(7);
+        Long cajeroId = jwtTokenProvider.obtenerUsuarioIdDesdeToken(token);
+        String rol = jwtTokenProvider.obtenerRolDesdeToken(token);
+        OrigenVentaEnum origen = "CLIENTE".equals(rol) ? OrigenVentaEnum.WEB : OrigenVentaEnum.POS;
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ventaService.registrarVenta(request, cajeroId));
+                .body(ventaService.registrarVenta(request, cajeroId, origen));
     }
 
     @GetMapping
@@ -62,10 +67,32 @@ public class VentaController {
         return ResponseEntity.ok(ventaService.listarPorRango(desdeOdt, hastaOdt));
     }
 
+    @GetMapping("/mis-compras")
+    @PreAuthorize("hasRole('CLIENTE')")
+    public ResponseEntity<List<VentaResponse>> misCompras(
+            @RequestHeader("Authorization") String authHeader) {
+        Long usuarioId = jwtTokenProvider.obtenerUsuarioIdDesdeToken(authHeader.substring(7));
+        return ResponseEntity.ok(ventaService.listarMisComprasWeb(usuarioId));
+    }
+
+    @GetMapping("/mis-ventas-hoy")
+    @PreAuthorize("hasRole('EMPLEADO')")
+    public ResponseEntity<List<VentaResponse>> misVentasHoy(
+            @RequestHeader("Authorization") String authHeader) {
+        Long cajeroId = jwtTokenProvider.obtenerUsuarioIdDesdeToken(authHeader.substring(7));
+        return ResponseEntity.ok(ventaService.listarDelDiaPorCajero(cajeroId));
+    }
+
     @GetMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN','EMPLEADO')")
     public ResponseEntity<VentaResponse> buscarPorId(@PathVariable Long id) {
         return ResponseEntity.ok(ventaService.buscarPorId(id));
+    }
+
+    @GetMapping("/{id}/detalle")
+    @PreAuthorize("hasAnyRole('ADMIN','EMPLEADO')")
+    public ResponseEntity<VentaDetalleResponse> detalle(@PathVariable Long id) {
+        return ResponseEntity.ok(ventaService.buscarDetallePorId(id));
     }
 
     @PutMapping("/{id}/anular")

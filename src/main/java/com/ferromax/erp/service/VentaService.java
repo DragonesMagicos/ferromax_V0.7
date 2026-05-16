@@ -1,6 +1,9 @@
 package com.ferromax.erp.service;
 
 import com.ferromax.erp.dto.ItemVentaRequest;
+import com.ferromax.erp.dto.ItemVentaResponse;
+import com.ferromax.erp.dto.StockUpdateEvent;
+import com.ferromax.erp.dto.VentaDetalleResponse;
 import com.ferromax.erp.dto.VentaRequest;
 import com.ferromax.erp.dto.VentaResponse;
 import com.ferromax.erp.exception.RecursoNoEncontradoException;
@@ -9,6 +12,7 @@ import com.ferromax.erp.model.EstadoVentaEnum;
 import com.ferromax.erp.model.ItemVenta;
 import com.ferromax.erp.model.MedioPagoEnum;
 import com.ferromax.erp.model.MovimientoStock;
+import com.ferromax.erp.model.OrigenVentaEnum;
 import com.ferromax.erp.model.Producto;
 import com.ferromax.erp.model.TipoComprobanteEnum;
 import com.ferromax.erp.model.TipoMovimientoEnum;
@@ -20,11 +24,14 @@ import com.ferromax.erp.repository.ProductoRepository;
 import com.ferromax.erp.repository.UsuarioRepository;
 import com.ferromax.erp.repository.VentaRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,9 +46,10 @@ public class VentaService {
     private final ComprobanteRepository comprobanteRepository;
     private final MovimientoStockRepository movimientoStockRepository;
     private final ProductoService productoService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     @Transactional
-    public VentaResponse registrarVenta(VentaRequest request, Long cajeroId) {
+    public VentaDetalleResponse registrarVenta(VentaRequest request, Long cajeroId, OrigenVentaEnum origen) {
 
         // PASO 1 — Verificar stock de todos los productos antes de tocar nada
         List<Producto> productos = new ArrayList<>();
@@ -59,6 +67,7 @@ public class VentaService {
         // PASO 2 — Crear la venta
         Venta venta = new Venta();
         venta.setEstado(EstadoVentaEnum.COMPLETADA);
+        venta.setOrigen(origen);
         venta.setMedioPago(MedioPagoEnum.valueOf(request.medioPago()));
         venta.setCajero(usuarioRepository.findById(cajeroId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Usuario", cajeroId)));
@@ -94,11 +103,28 @@ public class VentaService {
         venta.setDescuento(BigDecimal.ZERO);
         venta.setTotal(total);
 
-        // PASO 4 — Descontar el stock (genera alertas automáticamente si corresponde)
+        // PASO 4 — Descontar el stock con tipo VENTA y generar alertas si corresponde
         for (int i = 0; i < items.size(); i++) {
             Producto producto = productos.get(i);
-            int nuevoStock = producto.getStockActual() - items.get(i).cantidad();
-            productoService.actualizarStock(producto.getId(), nuevoStock);
+            int stockAnterior = producto.getStockActual();
+            int nuevoStock = stockAnterior - items.get(i).cantidad();
+
+            producto.setStockActual(nuevoStock);
+            productoRepository.save(producto);
+
+            MovimientoStock mov = new MovimientoStock();
+            mov.setProducto(producto);
+            mov.setTipo(TipoMovimientoEnum.VENTA);
+            mov.setCantidad(-items.get(i).cantidad());
+            mov.setStockAnterior(stockAnterior);
+            mov.setStockNuevo(nuevoStock);
+            movimientoStockRepository.save(mov);
+
+            productoService.generarAlertaSiCorrespondePublico(producto, nuevoStock);
+
+            messagingTemplate.convertAndSend(
+                    "/topic/stock/" + producto.getId(),
+                    new StockUpdateEvent(producto.getId(), producto.getSku(), nuevoStock));
         }
 
         // PASO 5 — Guardar la venta y crear el comprobante
@@ -109,7 +135,7 @@ public class VentaService {
         comprobante.setVenta(ventaGuardada);
         comprobanteRepository.save(comprobante);
 
-        return toResponse(ventaGuardada);
+        return toDetalleResponse(ventaGuardada);
     }
 
     @Transactional(readOnly = true)
@@ -124,6 +150,13 @@ public class VentaService {
     public VentaResponse buscarPorId(Long id) {
         return toResponse(ventaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Venta", id)));
+    }
+
+    @Transactional(readOnly = true)
+    public VentaDetalleResponse buscarDetallePorId(Long id) {
+        Venta venta = ventaRepository.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Venta", id));
+        return toDetalleResponse(venta);
     }
 
     @Transactional
@@ -158,9 +191,29 @@ public class VentaService {
         return toResponse(ventaRepository.save(venta));
     }
 
+    @Transactional(readOnly = true)
+    public List<VentaResponse> listarMisComprasWeb(Long usuarioId) {
+        return ventaRepository.findByCajeroIdAndOrigenOrderByFechaDesc(usuarioId, OrigenVentaEnum.WEB)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<VentaResponse> listarDelDiaPorCajero(Long cajeroId) {
+        ZoneId zonaAr = ZoneId.of("America/Argentina/Buenos_Aires");
+        OffsetDateTime inicio = LocalDate.now(zonaAr).atStartOfDay(zonaAr).toOffsetDateTime();
+        OffsetDateTime fin = inicio.plusDays(1);
+        return ventaRepository.findByCajeroIdAndFechaBetween(cajeroId, inicio, fin)
+                .stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     private VentaResponse toResponse(Venta venta) {
         String nombreCajero = venta.getCajero().getNombre()
                 + " " + venta.getCajero().getApellido();
+        String origen = venta.getOrigen() != null ? venta.getOrigen().name() : "POS";
         return new VentaResponse(
                 venta.getId(),
                 venta.getFecha(),
@@ -168,7 +221,42 @@ public class VentaService {
                 venta.getEstado().name(),
                 venta.getMedioPago().name(),
                 nombreCajero.strip(),
-                venta.getItems().size()
+                venta.getItems().size(),
+                origen
+        );
+    }
+
+    private VentaDetalleResponse toDetalleResponse(Venta venta) {
+        String nombreCajero = (venta.getCajero().getNombre()
+                + " " + venta.getCajero().getApellido()).strip();
+        String origen = venta.getOrigen() != null ? venta.getOrigen().name() : "POS";
+
+        List<ItemVentaResponse> itemsDto = venta.getItems().stream()
+                .map(item -> new ItemVentaResponse(
+                        item.getProducto().getId(),
+                        item.getProducto().getSku(),
+                        item.getProducto().getNombre(),
+                        item.getCantidad(),
+                        item.getPrecioUnitario(),
+                        item.getSubtotal()))
+                .toList();
+
+        Long comprobanteId = comprobanteRepository.findByVentaId(venta.getId())
+                .map(c -> c.getId())
+                .orElse(null);
+
+        return new VentaDetalleResponse(
+                venta.getId(),
+                venta.getFecha(),
+                venta.getSubtotal(),
+                venta.getDescuento(),
+                venta.getTotal(),
+                venta.getEstado().name(),
+                venta.getMedioPago().name(),
+                nombreCajero,
+                origen,
+                comprobanteId,
+                itemsDto
         );
     }
 }

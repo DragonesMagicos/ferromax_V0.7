@@ -8,6 +8,10 @@ export default defineConfig({
     tailwindcss(),
   ],
 
+  define: {
+    global: 'globalThis',
+  },
+
   resolve: {
     alias: { '@': '/src' },
   },

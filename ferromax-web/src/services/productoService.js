@@ -1,6 +1,7 @@
 import api from './api'
 
 const productoService = {
+  // ── ADMIN ─────────────────────────────────────────────────────────────────
   async listar() {
     const { data } = await api.get('/productos')
     return data
@@ -8,6 +9,27 @@ const productoService = {
 
   async buscarPorSku(sku) {
     const { data } = await api.get(`/productos/sku/${sku}`)
+    return data
+  },
+
+  async buscarPorCodigoBarras(codigo) {
+    const { data } = await api.get(`/productos/barcode/${encodeURIComponent(codigo)}`)
+    return data
+  },
+
+  // ── EMPLEADO (sin precioCompra ni nombreProveedor) ─────────────────────────
+  async listarEmpleado() {
+    const { data } = await api.get('/productos/empleado')
+    return data
+  },
+
+  async buscarPorSkuEmpleado(sku) {
+    const { data } = await api.get(`/productos/empleado/sku/${encodeURIComponent(sku)}`)
+    return data
+  },
+
+  async buscarPorCodigoBarrasEmpleado(codigo) {
+    const { data } = await api.get(`/productos/empleado/barcode/${encodeURIComponent(codigo)}`)
     return data
   },
 
